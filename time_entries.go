@@ -17,7 +17,7 @@ type timeEntryResult struct {
 }
 
 type timeEntryRequest struct {
-	TimeEntry TimeEntry `json:"time_entry"`
+	TimeEntry timeEntryModify `json:"time_entry"`
 }
 
 type TimeEntry struct {
@@ -32,6 +32,30 @@ type TimeEntry struct {
 	CreatedOn    string         `json:"created_on"`
 	UpdatedOn    string         `json:"updated_on"`
 	CustomFields []*CustomField `json:"custom_fields,omitempty"`
+}
+
+type timeEntryModify struct {
+	ID         int     `json:"id,omitempty"`
+	ProjectID  int     `json:"project_id"`
+	IssueID    int     `json:"issue_id"`
+	ActivityID int     `json:"activity_id"`
+	Hours      float32 `json:"hours"`
+	Comments   string  `json:"comments,omitempty"`
+	SpentOn    string  `json:"spent_on"`
+}
+
+//TODO: implement CustomFields support
+//TODO: implement User support
+func (timeEntry *TimeEntry) convertToModifyEntry() timeEntryModify {
+	return timeEntryModify{
+		ID:         timeEntry.Id,
+		ProjectID:  timeEntry.Project.Id,
+		IssueID:    timeEntry.Issue.Id,
+		ActivityID: timeEntry.Activity.Id,
+		Hours:      timeEntry.Hours,
+		Comments:   timeEntry.Comments,
+		SpentOn:    timeEntry.SpentOn,
+	}
 }
 
 // TimeEntriesWithFilter send query and return parsed result
@@ -127,7 +151,7 @@ func (c *Client) TimeEntry(id int) (*TimeEntry, error) {
 
 func (c *Client) CreateTimeEntry(timeEntry TimeEntry) (*TimeEntry, error) {
 	var ir timeEntryRequest
-	ir.TimeEntry = timeEntry
+	ir.TimeEntry = timeEntry.convertToModifyEntry()
 	s, err := json.Marshal(ir)
 	if err != nil {
 		return nil, err
@@ -162,7 +186,7 @@ func (c *Client) CreateTimeEntry(timeEntry TimeEntry) (*TimeEntry, error) {
 
 func (c *Client) UpdateTimeEntry(timeEntry TimeEntry) error {
 	var ir timeEntryRequest
-	ir.TimeEntry = timeEntry
+	ir.TimeEntry = timeEntry.convertToModifyEntry()
 	s, err := json.Marshal(ir)
 	if err != nil {
 		return err
